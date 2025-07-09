@@ -34,7 +34,7 @@ def document_indexing_update_task(dataset_id: str, document_id: str):
     document.processing_started_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
     db.session.commit()
 
-    # delete all document segment and index
+    # delete document segments except manual ones
     try:
         dataset = db.session.query(Dataset).filter(Dataset.id == dataset_id).first()
         if not dataset:
@@ -43,16 +43,41 @@ def document_indexing_update_task(dataset_id: str, document_id: str):
         index_type = document.doc_form
         index_processor = IndexProcessorFactory(index_type).init_index_processor()
 
+        # 获取所有segment，只保留手动创建的segment（source_type为"manual"）
         segments = db.session.query(DocumentSegment).filter(DocumentSegment.document_id == document_id).all()
         if segments:
-            index_node_ids = [segment.index_node_id for segment in segments]
+            # 分离手动创建的segment（source_type为"manual"）和其他segment
+            manual_segments = [segment for segment in segments if segment.source_type == "manual"]
+            auto_segments = [segment for segment in segments if segment.source_type != "manual"]
 
-            # delete from vector index
-            index_processor.clean(dataset, index_node_ids, with_keywords=True, delete_child_chunks=True)
+            # 只删除非手动创建的segment
+            if auto_segments:
+                index_node_ids = [segment.index_node_id for segment in auto_segments]
 
-            for segment in segments:
-                db.session.delete(segment)
-            db.session.commit()
+                # delete from vector index
+                index_processor.clean(dataset, index_node_ids, with_keywords=True, delete_child_chunks=True)
+
+                for segment in auto_segments:
+                    db.session.delete(segment)
+                db.session.commit()
+
+                logging.info(
+                    click.style(
+                        "Deleted {} auto segments, preserved {} manual segments for document: {}".format(
+                            len(auto_segments), len(manual_segments), document_id
+                        ),
+                        fg="green",
+                    )
+                )
+            else:
+                logging.info(
+                    click.style(
+                        "No auto segments to delete, preserved {} manual segments for document: {}".format(
+                            len(manual_segments), document_id
+                        ),
+                        fg="green",
+                    )
+                )
         end_at = time.perf_counter()
         logging.info(
             click.style(
