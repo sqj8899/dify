@@ -115,7 +115,7 @@ class DatasetDocumentStore:
                     tokens=tokens,
                     enabled=False,
                     created_by=self._user_id,
-                    source_type="automatic",  # 标识为自动创建
+                    is_manual_created=False,  # 标识为自动创建
                 )
                 if doc.metadata.get("answer"):
                     segment_document.answer = doc.metadata.pop("answer", "")

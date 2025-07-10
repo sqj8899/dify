@@ -2019,7 +2019,7 @@ class SegmentService:
                 indexing_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None),
                 completed_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None),
                 created_by=current_user.id,
-                source_type="manual",  # 标识为手动创建
+                is_manual_created=True,  # 标识为手动创建
             )
             if document.doc_form == "qa_model":
                 segment_document.word_count += len(args["answer"])
@@ -2096,7 +2096,7 @@ class SegmentService:
                     indexing_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None),
                     completed_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None),
                     created_by=current_user.id,
-                    source_type="manual",  # 标识为手动创建
+                    is_manual_created=True,  # 标识为手动创建
                 )
                 if document.doc_form == "qa_model":
                     segment_document.answer = segment_item["answer"]

@@ -681,7 +681,7 @@ class DocumentSegment(Base):
     completed_at = db.Column(db.DateTime, nullable=True)
     error = db.Column(db.Text, nullable=True)
     stopped_at = db.Column(db.DateTime, nullable=True)
-    source_type = db.Column(db.String(255), nullable=True)
+    is_manual_created = db.Column(db.Boolean, nullable=True, server_default=db.text("false"))
 
     @property
     def dataset(self):
